@@ -1,2 +1,3 @@
 rootProject.name = 'ametiste-u-mas'
+include 'xmas'
 

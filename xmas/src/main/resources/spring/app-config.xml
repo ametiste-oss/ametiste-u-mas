@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+	<context:property-placeholder location="${org.ametiste.u-mas.config.dir:classpath:}/jdbc.properties, ${org.ametiste.u-mas.config.dir:classpath:}/default.properties"/>
+
+    <import resource="integration.xml"/>
+
+
+    <bean id="relayService" class="org.ametiste.utility.xmas.application.TransactionalRelayService">
+        <constructor-arg name="executor" ref="executor"/>
+        <constructor-arg name="relayConfigFactory" ref="configurationsFactory"/>
+        <constructor-arg name="weavers">
+            <list>
+                <bean class="org.ametiste.utility.xmas.application.weaver.LoggingRelayWeaver">
+                    <constructor-arg ref="loggingWrapper"/>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="disabledLogger" class="org.ametiste.utility.xmas.infrastructure.logging.DisabledLogger"/>
+
+    <bean id ="executor" class="java.util.concurrent.Executors" factory-method="newFixedThreadPool">
+        <constructor-arg value="${org.ametiste.u-mas.executor.thread.number:2}"/>
+    </bean>
+    <alias name="disabledLogger" alias="loggingWrapper" />
+
+    <beans profile="org.ametiste.u-mas.logging.global.enabled" >
+
+        <bean id="logBootstrap" class="org.ametiste.utility.xmas.infrastructure.persistance.jdbc.PgLoggingBootstrap" init-method="init">
+            <constructor-arg ref="logDataSource" />
+            <constructor-arg name="tableName" ref="loggerTable"/>
+            <constructor-arg name="outboundTableName" ref="outboundLogTable"/>
+        </bean>
+
+        <bean id="loggerTable" class="org.ametiste.utils.common.jdbc.TableName">
+            <constructor-arg name="databaseName" value="${jdbc.log.database.name}" />
+            <constructor-arg name="tableName" value="${jdbc.log.original.table.name}" />
+        </bean>
+
+        <bean id="loggingRepo" class="org.ametiste.utility.xmas.infrastructure.persistance.jdbc.PgLoggingRepository">
+            <constructor-arg name="source" ref="logDataSource"/>
+            <constructor-arg name="tableName" ref="loggerTable"/>
+            <constructor-arg name="outboundTableName" ref="outboundLogTable"/>
+        </bean>
+        <bean id="outboundLogTable" class="org.ametiste.utils.common.jdbc.TableName">
+            <constructor-arg name="databaseName" value="${jdbc.log.database.name}" />
+            <constructor-arg name="tableName" value="${jdbc.log.outbound.table.name}" />
+        </bean>
+
+        <bean id="enabledLogger" class="org.ametiste.utility.xmas.infrastructure.logging.ByPropertyUmasLogger">
+            <constructor-arg name="logProperty" value="${org.ametiste.u-mas.persistance.logging.required:false}"/>
+            <constructor-arg name="loggers" >
+                <map>
+                    <entry key="true" value-ref="loggingRepo"/>
+                </map>
+            </constructor-arg>
+        </bean>
+
+        <alias name="enabledLogger" alias="loggingWrapper" />
+
+        <bean id="logDataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+            <property name="driverClassName" value="${jdbc.driverClassName}"/>
+            <property name="url" value="${jdbc.url}"/>
+            <property name="username" value="${jdbc.username}"/>
+            <property name="password" value="${jdbc.password}"/>
+        </bean>
+
+    </beans>
+
+</beans>

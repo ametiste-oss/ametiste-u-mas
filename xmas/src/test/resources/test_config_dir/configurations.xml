@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:util="http://www.springframework.org/schema/util"
+	   xmlns:lang="http://www.springframework.org/schema/lang"
+	   xsi:schemaLocation="
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.1.xsd
+		http://www.springframework.org/schema/lang http://www.springframework.org/schema/lang/spring-lang-4.1.xsd
+">
+
+	<bean id="configurationsFactory" class="org.ametiste.utility.xmas.infrastructure.SimpleRelayConfigurationFactory">
+		<property name="configurationList" ref="configurationsList"/>
+	</bean>
+
+
+<!--	<lang:groovy id="configurationsFactory" script-source="classpath:RelayConfigurationFactory.groovy" />
+
+-->
+	<util:list id="configurationsList">
+		<ref bean="dummyConfiguration" />
+		<ref bean="dummyConfiguration2" />
+        <ref bean="formSupportConfig"/>
+        <ref bean="getMethodConfig"/>
+	</util:list>
+
+	<bean id="dummyConfiguration" class="org.mockito.Mockito" factory-method="mock">
+		<qualifier value="firstTestConfig"  type="org.springframework.beans.factory.annotation.Qualifier" />
+		<constructor-arg value="org.ametiste.utility.xmas.infrastructure.configurations.BridgeRelayConfiguration"/>
+	</bean>
+
+	<bean id="dummyConfiguration2" class="org.mockito.Mockito" factory-method="mock">
+		<qualifier value="secondTestConfig"  type="org.springframework.beans.factory.annotation.Qualifier" />
+		<constructor-arg value="org.ametiste.utility.xmas.infrastructure.configurations.BridgeRelayConfiguration"/>
+	</bean>
+
+    <bean id="formSupportConfig"  class="org.ametiste.utility.xmas.infrastructure.configurations.FormUriEncodedRelayConfiguration">
+        <qualifier value="formSupportConfig"  type="org.springframework.beans.factory.annotation.Qualifier" />
+        <constructor-arg name="converter" >
+            <bean class="org.ametiste.utility.xmas.infrastructure.converter.NoConverter"/>
+        </constructor-arg>
+        <constructor-arg name="strategy">
+            <bean class="org.ametiste.utility.xmas.infrastructure.transaction.FormUrlencodedTransactionStrategy">
+                <constructor-arg name="template" ref="testTemplate"/>
+                <constructor-arg name="uri" value="myFormUri"/>
+            </bean>
+        </constructor-arg>
+		<constructor-arg name="configurations">
+			<array>
+				<value type="org.ametiste.utility.xmas.domain.model.TransactionSupport">
+					ENABLED
+				</value>
+			</array>
+		</constructor-arg>
+   </bean>
+
+	<bean id="getMethodConfig" class="org.ametiste.utility.xmas.infrastructure.configurations.GetRelayConfiguration">
+        <qualifier value="getMethodConfig"  type="org.springframework.beans.factory.annotation.Qualifier" />
+        <constructor-arg name="converter" >
+            <bean class="org.ametiste.utility.xmas.infrastructure.converter.ModifyConverter">
+                <constructor-arg name="params">
+                    <list>
+                        <bean class="org.ametiste.utility.xmas.infrastructure.converter.model.AddParamPair">
+                            <constructor-arg name="condition" value="SILENT" />
+                            <constructor-arg name="name" value="addMe" />
+                            <constructor-arg name="value">
+                                <bean class="org.ametiste.utility.xmas.infrastructure.converter.model.ConstantParamValue">
+                                    <constructor-arg name="value" value="added" />
+                                </bean>
+                            </constructor-arg>
+                        </bean>
+                        <bean class="org.ametiste.utility.xmas.infrastructure.converter.model.ReplaceParamPair">
+                            <constructor-arg name="condition" value="SILENT" />
+                            <constructor-arg name="name" value="replaceMe" />
+                            <constructor-arg name="value">
+                                <bean class="org.ametiste.utility.xmas.infrastructure.converter.model.ConstantParamValue">
+                                    <constructor-arg name="value" value="replaced" />
+                                </bean>
+                            </constructor-arg>
+                        </bean>
+                        <bean class="org.ametiste.utility.xmas.infrastructure.converter.model.DeleteParamPair">
+                            <constructor-arg name="condition" value="SILENT" />
+                            <constructor-arg name="name" value="removeMe" />
+                            <constructor-arg name="value">
+                                <bean class="org.ametiste.utility.xmas.infrastructure.converter.model.ConstantParamValue">
+                                    <constructor-arg name="value" value="replaced" />
+                                </bean>
+                            </constructor-arg>
+                        </bean>
+                    </list>
+                </constructor-arg>
+            </bean>
+        </constructor-arg>
+        <constructor-arg name="strategy">
+            <bean class="org.ametiste.utility.xmas.infrastructure.transaction.MethodGetTransactionStrategy">
+                <constructor-arg name="template" ref="testTemplate"/>
+                <constructor-arg name="uri" value="myGetUri"/>
+            </bean>
+        </constructor-arg>
+        <constructor-arg name="configs">
+            <array>
+                <value type="org.ametiste.utility.xmas.domain.model.TransactionSupport">
+                    ENABLED
+                </value>
+            </array>
+        </constructor-arg>
+
+    </bean>
+
+    <bean id="testTemplate" class="org.springframework.web.client.RestTemplate"/>
+
+</beans>

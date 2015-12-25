@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:int-jdbc="http://www.springframework.org/schema/integration/jdbc"
+       xmlns:int="http://www.springframework.org/schema/integration"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/integration/jdbc http://www.springframework.org/schema/integration/jdbc/spring-integration-jdbc.xsd
+        http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+        http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+		">
+
+    <import resource="${org.ametiste.u-mas.configuration.descriptor.path:classpath:/configurations.xml}"/>
+    <import resource="channels.xml"/>
+    <import resource="inbound.xml"/>
+
+    <import resource="classpath:spring/ame-ifaces-si-error-transformer.xml" />
+
+    <int:service-activator input-channel="processedMessages" ref="relayWrapService" output-channel="asyncReplyMessages"/>
+
+    <int:transformer input-channel="asyncReplyMessages" output-channel="webReplies" expression="''"/>
+
+    <int:bridge input-channel="webRequests" output-channel="loggedMessages"/>
+
+    <int:service-activator input-channel="loggedMessages" ref="loggingWrapper" method="logOriginal" />
+
+   <int:bridge input-channel="loggedMessages" output-channel="processedMessages"/>
+
+    <int:transformer input-channel="handleErrorChannel" output-channel="webReplies" ref="errorTransformer" method="transform"></int:transformer>
+
+    <alias name="errorTransformerWithMappers" alias="errorTransformer"/>
+
+    <bean id="relayWrapService" class="org.ametiste.utility.xmas.application.RelayWrap">
+        <property name="service" ref="relayService"/>
+    </bean>
+
+</beans>

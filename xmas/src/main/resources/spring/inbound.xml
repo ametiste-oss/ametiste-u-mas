@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:int-http="http://www.springframework.org/schema/integration/http"
+	   xsi:schemaLocation="http://www.springframework.org/schema/integration/http http://www.springframework.org/schema/integration/http/spring-integration-http.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+">
+
+
+
+	<!-- main inbound gateway for search requests. Uses channel "commonRequests" for sending requests to chain and "commonReplies"
+    for responses
+
+    -->
+   <int-http:inbound-gateway id="inboundController"
+    	request-channel="webRequests"
+    	reply-channel="webReplies"
+		error-channel="handleErrorChannel"
+    	path="/xmas"
+    	supported-methods="POST"
+    	payload-expression="new org.ametiste.utility.xmas.domain.model.RawDataBox(body)"
+    	mapped-response-headers="X-Dph*, Content-Type"
+    	mapped-request-headers="X-Dph*, Content-Type"
+		request-payload-type="java.util.Map"
+	>
+	 	<int-http:request-mapping consumes="application/json"/>
+    	<int-http:header name="requestId" expression="T(java.util.UUID).randomUUID().toString()"/>
+	</int-http:inbound-gateway>
+
+
+
+    <int-http:inbound-gateway id="inboundFormController"
+                              request-channel="webRequests"
+                              reply-channel="webReplies"
+                              error-channel="handleErrorChannel"
+                              path="/xmas"
+                              supported-methods="POST"
+                              payload-expression="T(org.ametiste.utility.xmas.domain.model.RawDataBox).buildFromMultiMap(#requestParams)"
+                              mapped-response-headers="X-Dph*, Content-Type"
+                              mapped-request-headers="X-Dph*, Content-Type"
+            >
+        <int-http:request-mapping consumes="application/x-www-form-urlencoded"/>
+        <int-http:header name="requestId" expression="T(java.util.UUID).randomUUID().toString()"/>
+    </int-http:inbound-gateway>
+
+	<int-http:inbound-gateway id="inboundGetController"
+							  request-channel="webRequests"
+							  reply-channel="webReplies"
+							  error-channel="handleErrorChannel"
+							  path="/xmas"
+							  supported-methods="GET"
+							  payload-expression="T(org.ametiste.utility.xmas.domain.model.RawDataBox).buildFromParamMap(#requestParams)"
+
+							  mapped-response-headers="X-Dph*, Content-Type"
+							  mapped-request-headers="X-Dph*, Content-Type"
+			>
+		<int-http:header name="requestId" expression="T(java.util.UUID).randomUUID().toString()"/>
+	</int-http:inbound-gateway>
+	<!-- while method buildFromMultiMap is used for x-www-form-urlencoded bridge, it'll fit get request too, however it should be refactored in future,
+	since content-dependency thruout all umas was done without deeper thinking -->
+
+</beans>
